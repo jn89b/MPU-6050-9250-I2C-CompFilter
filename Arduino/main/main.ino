@@ -5,7 +5,7 @@ long loopTimer, loopTimer2;
 int temperature;
 double accelPitch;
 double accelRoll;
-long acc_x, acc_y, acc_z;
+double acc_x, acc_y, acc_z;
 double accel_x, accel_y, accel_z;
 double gyroRoll, gyroPitch, gyroYaw;
 int gyro_x, gyro_y, gyro_z;
@@ -15,6 +15,9 @@ double freq, dt;
 double tau = 0.98;
 double roll = 0;
 double pitch = 0;
+unsigned long current_time_ms;
+unsigned long  init_time_ms;
+double current_time_sec;
 
 // 250 deg/s --> 131.0, 500 deg/s --> 65.5, 1000 deg/s --> 32.8, 2000 deg/s --> 16.4
 long scaleFactorGyro = 65.5;
@@ -26,7 +29,7 @@ long scaleFactorAccel = 8192;
 void setup() {
   // Start
   Wire.begin();
-  Serial.begin(115200);
+  Serial.begin(57600);
 
   // Setup the registers of the MPU-6050 and start up
   setup_mpu_6050_registers();
@@ -59,6 +62,7 @@ void setup() {
   Serial.print("Yaw (deg)\t\t\n");
   delay(2000);
 
+  init_time_ms = millis();
   // Reset the loop timer
   loopTimer = micros();
   loopTimer2 = micros();
@@ -99,6 +103,9 @@ void loop() {
   gyroRoll -= rotation_y*dt;
   gyroYaw += rotation_z*dt;
 
+  current_time_ms = millis() - init_time_ms;
+  current_time_sec = current_time_ms/1000.0;
+
   // Visualize just the roll
   // Serial.print(roll); Serial.print(",");
   // Serial.print(gyroRoll); Serial.print(",");
@@ -109,11 +116,20 @@ void loop() {
   // Serial.print(gyroPitch); Serial.print(",");
   // Serial.println(accelPitch);
 
-  // Data out serial monitor
-  Serial.print(freq,0);   Serial.print(",");
-  Serial.print(roll,1);   Serial.print(",");
-  Serial.print(pitch,1);  Serial.print(",");
-  Serial.println(gyroYaw,1);
+  // Data out serial monitor 
+  /* 
+   *  Note the accelerations are normalied to 1g 
+  so multiply by 9.8m/s if you want to get actual values
+  */ 
+  
+  Serial.print(current_time_sec,4);   Serial.print(",");
+  Serial.print(roll,2);   Serial.print(",");
+  Serial.print(pitch,2);  Serial.print(",");
+  Serial.print(gyroYaw,2); Serial.print(",");
+  Serial.print(accel_x,2); Serial.print(",");
+  Serial.print(accel_y,2); Serial.print(",");
+  Serial.print(accel_z,2);
+  Serial.println("");
 
   // Wait until the loopTimer reaches 4000us (250Hz) before next loop
   while (micros() - loopTimer <= 4000);
